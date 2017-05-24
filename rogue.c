@@ -1,28 +1,15 @@
 #include<ncurses.h>
 #include<string.h>
 
-void wrap_move(int row_move,int col_move,typeof(stdscr) scr) {
-    int prev_row,prev_col;
-    int row,col;
-
-    getyx(scr,prev_row,prev_col);
-    wmove(scr,prev_row+row_move,prev_col+col_move);
-    getyx(scr,row,col);
-
-    if(row_move != 0 && prev_row == row)
-        row = 0;
-    if(col_move != 0 && prev_col == col)
-        col = 0;
-
-    if(!(col && row))
-        wmove(scr,row,col);
+extern inline void cwmove(typeof(stdscr) scr, int row, int col, int max_row, int max_col) {
+    wmove(scr,row % max_row,col % max_col);
 }
 
 int main ()
 {
     int ch;
     int row,col;
-    int prev;
+    int max_row,max_col;
 
     char str[] = "Pressed key is ";
 
@@ -31,9 +18,10 @@ int main ()
     noecho();
     keypad(stdscr, TRUE);
 
-    getmaxyx(stdscr,row,col);
-    row = row/4;
-    col = (col-strlen(str))/4;
+    getmaxyx(stdscr,max_row,max_col);
+
+    row = max_row/4;
+    col = (max_col-strlen(str))/4;
 
     move(row,col);
 
@@ -41,7 +29,8 @@ int main ()
         ch = getch();
         printw(str);
         addch(ch | A_BOLD);
-        wrap_move(1,0,stdscr);
+        getyx(stdscr,row,col);
+        cwmove(stdscr,row+1,col,max_row,max_col);
 
         refresh();
     } while(ch != KEY_F(1));
